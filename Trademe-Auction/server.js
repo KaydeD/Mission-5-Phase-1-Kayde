@@ -1,34 +1,54 @@
-import connectDB from './Database/db.js';
-import express from 'express';
-import AuctionItem from './AuctionItem/auctionItem.js';
+import connectDB from "../Database/db.js";
+import AuctionItem from "../AuctionItem/auctionItem.js";
+import { program } from "commander";
 
-const app = express();
-app.use(express.json());
+const sampleData = [
+  {
+    title: "Vintage Guitar",
+    description: "A beautiful vintage acoustic guitar from the 1970s",
+    start_price: 100,
+    reserve_price: 250,
+  },
+  {
+    title: "Mountain Bike",
+    description: "Lightly used mountain bike, great condition",
+    start_price: 50,
+    reserve_price: 150,
+  },
+  {
+    title: "PlayStation 5",
+    description: "Brand new PS5 with two controllers",
+    start_price: 400,
+    reserve_price: 600,
+  },
+];
 
-connectDB();
+const seedData = async () => {
+  await connectDB();
+  await AuctionItem.insertMany(sampleData);
+  console.log("Data seeded successfully!");
+  process.exit();
+};
 
-app.get('/api/items', async (req, res) => {
-  try {
-    const { search } = req.query;
+const deleteData = async () => {
+  await connectDB();
+  await AuctionItem.deleteMany({});
+  console.log("Data deleted successfully!");
+  process.exit();
+};
 
-    if (!search) {
-      const items = await AuctionItem.find();
-      return res.json(items);
-    }
+program
+  .name("seed")
+  .description("CLI tool to manage auction item seed data");
 
-    const items = await AuctionItem.find({
-      $or: [
-        { title: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
-      ]
-    });
+program
+  .command("seed")
+  .description("Seed the database with sample auction items")
+  .action(seedData);
 
-    res.json(items);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+program
+  .command("delete")
+  .description("Delete all auction items from the database")
+  .action(deleteData);
 
-app.listen(3000, () => {
-  console.log('Server running on http://localhost:3000/api/items');
-});
+program.parse();
