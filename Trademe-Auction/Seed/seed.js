@@ -1,5 +1,6 @@
 import connectDB from "../Database/db.js";
 import AuctionItem from "../AuctionItem/auctionItem.js";
+import { program } from "commander";
 
 const sampleData = [
   {
@@ -36,11 +37,18 @@ const deleteData = async () => {
   process.exit();
 };
 
-if (process.argv[2] === "seed") {
-  seedData();
-} else if (process.argv[2] === "delete") {
-  deleteData();
-} else {
-  console.log("Please use: node seed.js seed   OR   node seed.js delete");
-  process.exit();
-}
+program
+  .name("seed")
+  .description("CLI tool to manage auction item seed data");
+
+program
+  .command("seed")
+  .description("Seed the database with sample auction items")
+  .action(seedData);
+
+program
+  .command("delete")
+  .description("Delete all auction items from the database")
+  .action(deleteData);
+
+program.parse();

@@ -1,54 +1,36 @@
-import connectDB from "../Database/db.js";
-import AuctionItem from "../AuctionItem/auctionItem.js";
-import { program } from "commander";
+import express from "express";
+import connectDB from "./Database/db.js";
+import AuctionItem from "./AuctionItem/auctionItem.js";
 
-const sampleData = [
-  {
-    title: "Vintage Guitar",
-    description: "A beautiful vintage acoustic guitar from the 1970s",
-    start_price: 100,
-    reserve_price: 250,
-  },
-  {
-    title: "Mountain Bike",
-    description: "Lightly used mountain bike, great condition",
-    start_price: 50,
-    reserve_price: 150,
-  },
-  {
-    title: "PlayStation 5",
-    description: "Brand new PS5 with two controllers",
-    start_price: 400,
-    reserve_price: 600,
-  },
-];
+const app = express();
+const PORT = 3000;
 
-const seedData = async () => {
-  await connectDB();
-  await AuctionItem.insertMany(sampleData);
-  console.log("Data seeded successfully!");
-  process.exit();
-};
+app.use(express.json());
 
-const deleteData = async () => {
-  await connectDB();
-  await AuctionItem.deleteMany({});
-  console.log("Data deleted successfully!");
-  process.exit();
-};
+connectDB();
 
-program
-  .name("seed")
-  .description("CLI tool to manage auction item seed data");
+app.get("/items", async (req, res) => {
+  const { search } = req.query;
 
-program
-  .command("seed")
-  .description("Seed the database with sample auction items")
-  .action(seedData);
+  try {
+    if (!search) {
+      const all = await AuctionItem.find();
+      return res.json({ count: all.length, results: all });
+    }
 
-program
-  .command("delete")
-  .description("Delete all auction items from the database")
-  .action(deleteData);
+    const results = await AuctionItem.find({
+      $or: [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ],
+    });
 
-program.parse();
+    res.json({ count: results.length, results });
+  } catch (error) {
+    res.status(500).json({ error: "Search failed", details: error.message });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}/items`);
+});
