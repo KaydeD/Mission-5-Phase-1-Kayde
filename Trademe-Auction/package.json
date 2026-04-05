@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node server.js",
     "seed": "node Seed/seed.js seed",
-    "delete": "node Seed/seed.js delete"
+    "delete": "node Seed/seed.js delete",
+    "help" : "node Seed/seed.js help"
   },
   "keywords": [],
   "author": "",
